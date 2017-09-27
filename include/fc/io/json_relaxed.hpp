@@ -11,6 +11,7 @@
 #include <fc/io/sstream.hpp>
 #include <fc/log/logger.hpp>
 #include <fc/string.hpp>
+#include <fc/crypto/hex.hpp>
 //#include <utfcpp/utf8.h>
 #include <iostream>
 #include <fstream>
@@ -723,7 +724,7 @@ static fc::string bulk_read(const fc::string& fname)
        try
        {
            char c = in.peek();
-           if( (c != '@') && (c != '<') )
+           if( (c != '@') && (c != '<') && (c != '%') )
               FC_THROW_EXCEPTION( parse_error_exception,
                                   "Expected '@' or '<', but read '${char}'",
                                   ("char",string(&c, &c + 1)) );
@@ -737,10 +738,15 @@ static fc::string bulk_read(const fc::string& fname)
 
            fc::string fdata( bulk_read( fname.get_string() ) );
 
-           if(c == '@')
+           if( c == '@' )
            {
                fc::stringstream ss( fdata );
                return variant_from_stream<fc::stringstream, strict, true>( ss );
+           }
+           else if( c == '%' )
+           {
+               FC_ASSERT( static_cast<uint32_t>( fdata.size() ) == fdata.size() );
+               return variant( to_hex( fdata.data(), fdata.size() ) );
            }
            else // '<'
                return variant( std::move( fdata ) );
@@ -799,6 +805,7 @@ static fc::string bulk_read(const fc::string& fname)
               FC_THROW_EXCEPTION( eof_exception, "unexpected end of file" );
             case '@':
             case '<':
+            case '%':
                 if(cmdline)
                 { return variant_from_fname_from_stream<T, strict>( in ); }
                 // !fallthrough

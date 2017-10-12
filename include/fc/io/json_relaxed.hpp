@@ -686,37 +686,6 @@ namespace fc { namespace json_relaxed
        FC_THROW_EXCEPTION( parse_error_exception, "expected: null|true|false" );
    }
    
-/// read stream into string
-static fc::string bulk_read(const fc::string& fname)
-{
-    fc::string res;
-    size_t nread = 0;
-
-    res.resize(256);
-    try
-    {
-        fc::ifstream ifs(fname);
-
-        while(true)
-        {
-            if(nread == res.capacity())
-                            res.resize( nread + 4096 );
-            res.resize( res.capacity() );
-
-            FC_ASSERT( res.size() > nread );
-            nread += ifs.readsome( &(res[nread]), res.size() - nread );
-        }
-    }
-    catch(const fc::eof_exception&)
-    { ; }
-    FC_RETHROW_EXCEPTIONS(  warn, "Exception (not EOF) in bulk read({fname}), nread={nread}",
-                            ("fname", fname )("nread", nread) );
-
-    res.resize(nread);
-
-    return(res);
-}
-
    template<typename T, bool strict>
    variant variant_from_fname_from_stream( T& in )
    {
@@ -736,7 +705,8 @@ static fc::string bulk_read(const fc::string& fname)
                                                  "@filename (<filename) expects filename to be a string, but got vt=${vt}",
                                                  ("vt",fname.get_type()) );
 
-           fc::string fdata( bulk_read( fname.get_string() ) );
+           fc::string fdata;
+           read_file_contents(fname.get_string(), fdata);
 
            if( c == '@' )
            {

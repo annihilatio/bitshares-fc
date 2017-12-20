@@ -398,7 +398,7 @@ namespace fc {
                 // slog( "jump to %p from %p", next, prev );
                 // fc_dlog( logger::get("fc_context"), "from ${from} to ${to}", ( "from", int64_t(prev) )( "to", int64_t(next) ) ); 
 #if BOOST_VERSION >= 105600
-                bc::jump_fcontext( &prev->my_context, next->my_context, 0 );
+                bc::detail::jump_fcontext( next->my_context, 0 );
 #elif BOOST_VERSION >= 105300
                 bc::jump_fcontext( prev->my_context, next->my_context, 0 );
 #else
@@ -440,7 +440,7 @@ namespace fc {
                 // slog( "jump to %p from %p", next, prev );
                 // fc_dlog( logger::get("fc_context"), "from ${from} to ${to}", ( "from", int64_t(prev) )( "to", int64_t(next) ) );
 #if BOOST_VERSION >= 105600
-                bc::jump_fcontext( &prev->my_context, next->my_context, (intptr_t)this );
+                bc::detail::jump_fcontext( next->my_context, (intptr_t)this );
 #elif BOOST_VERSION >= 105300
                 bc::jump_fcontext( prev->my_context, next->my_context, (intptr_t)this );
 #else

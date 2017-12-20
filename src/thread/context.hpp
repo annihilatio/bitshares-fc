@@ -1,6 +1,7 @@
 #pragma once
 #include <fc/thread/thread.hpp>
 #include <boost/context/all.hpp>
+//#include <boost/context/execution_context.hpp>
 #include <fc/exception/exception.hpp>
 #include <vector>
 
@@ -66,7 +67,7 @@ namespace fc {
 #if BOOST_VERSION >= 105600
      size_t stack_size = FC_CONTEXT_STACK_SIZE;
      alloc.allocate(stack_ctx, stack_size);
-     my_context = bc::make_fcontext( stack_ctx.sp, stack_ctx.size, sf); 
+     my_context = bc::detail::make_fcontext( stack_ctx.sp, stack_ctx.size, sf);
 #elif BOOST_VERSION >= 105400
      size_t stack_size = FC_CONTEXT_STACK_SIZE;
      alloc.allocate(stack_ctx, stack_size);
@@ -212,7 +213,7 @@ namespace fc {
 #if BOOST_VERSION >= 105300 && BOOST_VERSION < 105600
     bc::fcontext_t*              my_context;
 #else
-    bc::fcontext_t               my_context;
+    bc::detail::fcontext_t       my_context;
 #endif
     fc::context*                caller_context;
     stack_allocator*            stack_alloc;

@@ -48,8 +48,8 @@ namespace fc {
         }
         DH_generate_key(dh);
 
-        const BIGNUM *ppub_key;
-        const BIGNUM *ppriv_key;
+        const BIGNUM *ppub_key = NULL;
+        const BIGNUM *ppriv_key = NULL;
         DH_get0_key(dh, &ppub_key, &ppriv_key);
         pub_key.resize( BN_num_bytes( ppub_key ) );
         priv_key.resize( BN_num_bytes( ppriv_key ) );

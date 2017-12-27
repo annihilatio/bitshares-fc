@@ -55,6 +55,15 @@ namespace fc
          fc::shared_ptr<impl> my;
    };
 
+//#define WITH_DIRECT_LOGGER
+#ifdef WITH_DIRECT_LOGGER
+   void ddlog(const char *fname, int line, const char *func, const char *fmt, ...);
+#define DDLOG(fmt, ...) ddlog(__FILE__, __LINE__, __func__, (fmt), ##__VA_ARGS__);
+#else
+#define DDLOG(fmt, ...) FC_MULTILINE_MACRO_BEGIN FC_MULTILINE_MACRO_END
+#endif // WITH_DIRECT_LOGGER
+
+
 } // namespace fc
 
 #ifndef DEFAULT_LOGGER
@@ -160,7 +169,7 @@ namespace fc
 #define wdump( SEQ ) \
     wlog( FC_FORMAT(SEQ), FC_FORMAT_ARG_PARAMS(SEQ) )  
 #define edump( SEQ ) \
-    elog( FC_FORMAT(SEQ), FC_FORMAT_ARG_PARAMS(SEQ) )  
+    elog( FC_FORMAT(SEQ), FC_FORMAT_ARG_PARAMS(SEQ) )
 
 // this disables all normal logging statements -- not something you'd normally want to do,
 // but it's useful if you're benchmarking something and suspect logging is causing

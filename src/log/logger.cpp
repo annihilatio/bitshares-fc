@@ -9,6 +9,12 @@
 #include <string>
 #include <fc/log/logger_config.hpp>
 
+#ifdef WITH_DIRECT_LOGGER
+#include <stdarg.h>
+#include <sys/types.h>
+#include <sys/syscall.h>
+#endif // WITH_DIRECT_LOGGER
+
 namespace fc {
 
     class logger::impl : public fc::retainable {
@@ -109,5 +115,57 @@ namespace fc {
 
    bool configure_logging( const logging_config& cfg );
    bool do_default_config      = configure_logging( logging_config::default_config() );
+
+#ifdef WITH_DIRECT_LOGGER
+   void ddlog(const char *fname, int line, const char *func, const char *fmt, ...)
+   {
+       const char *fnm = strrchr(fname, '/');
+       if(!fnm)
+           fnm = fname;
+       else
+           fnm++;
+
+       char buf[2048];
+       char *c = buf;
+       int csz = sizeof(buf);
+       int r;
+
+       {
+           unsigned long tmm = (unsigned long)time(nullptr);
+           r = snprintf(c, csz, "%lu", tmm);
+           if((r > 0) && (r < csz))
+               { csz -= r; c += r; }
+       }
+       {
+           unsigned long tid = syscall(__NR_gettid);;
+           r = snprintf(c, csz, " [%lu]", tid);
+           if((r > 0) && (r < csz))
+               { csz -= r; c += r; }
+       }
+       {
+           r = snprintf(c, csz, " %s:%.3d (%s) ", fnm, line, func);
+           if((r > 0) && (r < csz))
+               { csz -= r; c += r; }
+       }
+
+
+       va_list ap;
+       va_start(ap, fmt);
+
+       r = vsnprintf(c, csz, fmt, ap);
+       if((r > 0) && (r < csz))
+           { csz -= r; c += r; }
+       if(csz)
+       {
+           *c = '\n';
+           csz--; c++;
+       }
+
+       va_end(ap);
+
+       write(2, buf, c - buf);
+   }
+#endif // WITH_DIRECT_LOGGER
+
 
 } // namespace fc

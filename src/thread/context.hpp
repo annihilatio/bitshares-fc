@@ -31,6 +31,11 @@
   namespace bco = boost::coroutine;
 #endif
 
+namespace boost { namespace context { namespace detail {
+    struct transfer_t;
+} } }
+
+
 namespace fc {
   class thread;
   class promise_base;
@@ -49,7 +54,7 @@ namespace fc {
 #endif
 
 
-    context( void (*sf)(intptr_t), stack_allocator& alloc, fc::thread* t )
+    context( void (*sf)(boost::context::detail::transfer_t), stack_allocator& alloc, fc::thread* t )
     : caller_context(0),
       stack_alloc(&alloc),
       next_blocked(0), 
@@ -64,10 +69,12 @@ namespace fc {
       cur_task(0),
       context_posted_num(0)
     {
+// TXX use separate section with correct boost version
 #if BOOST_VERSION >= 105600
      size_t stack_size = FC_CONTEXT_STACK_SIZE;
      alloc.allocate(stack_ctx, stack_size);
      my_context = bc::detail::make_fcontext( stack_ctx.sp, stack_ctx.size, sf);
+     // DDLOG("Created fc::context at %p with my_context=%p", this, my_context);
 #elif BOOST_VERSION >= 105400
      size_t stack_size = FC_CONTEXT_STACK_SIZE;
      alloc.allocate(stack_ctx, stack_size);
@@ -103,9 +110,10 @@ namespace fc {
      complete(false),
      cur_task(0),
      context_posted_num(0)
-    {}
+    { /* DDLOG("Created fc::context at %p with NULL my_context", this); */ }
 
     ~context() {
+      // DDLOG("Destroyed fc::context at %p", this);
 #if BOOST_VERSION >= 105600
       if(stack_alloc)
         stack_alloc->deallocate( stack_ctx );

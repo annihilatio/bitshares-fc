@@ -10,7 +10,7 @@ if( ECC_IMPL STREQUAL secp256k1 )
     target_link_libraries( blind fc )
 endif()
 
-add_executable( task_cancel_test all_tests.cpp thread/task_cancel.cpp )
+add_executable( task_cancel_test all_tests.cpp thread/task_cancel.cpp thread/tctx.cpp)
 target_link_libraries( task_cancel_test fc )
 
 

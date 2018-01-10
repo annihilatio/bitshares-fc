@@ -136,7 +136,7 @@ char * dupstr (const char* s) {
 
 char* my_generator(const char* text, int state)
 {
-   static int list_index, len;
+   static size_t list_index, len;
    const char *name;
 
    if (!state) {

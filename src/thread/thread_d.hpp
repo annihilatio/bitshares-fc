@@ -404,14 +404,8 @@ namespace fc {
                 }
                 // slog( "jump to %p from %p", next, prev );
                 // fc_dlog( logger::get("fc_context"), "from ${from} to ${to}", ( "from", int64_t(prev) )( "to", int64_t(next) ) ); 
-#if BOOST_VERSION >= 105600
                 bc::detail::transfer_t rj = bc::detail::jump_fcontext( next->my_context, this );
                 static_cast<thread_d*>(rj.data)->old->my_context = rj.fctx;
-#elif BOOST_VERSION >= 105300
-                bc::jump_fcontext( prev->my_context, next->my_context, 0 );
-#else
-                bc::jump_fcontext( &prev->my_context, &next->my_context, 0 );
-#endif
                 // DDLOG("JUMP_IN: this=%p, current=%p(my_context=%p), next=%p(my_context=%p)", this, current, current ? current->my_context : 0, next, next ? next->my_context : 0);
                 BOOST_ASSERT( current );
                 BOOST_ASSERT( current == prev );
@@ -450,14 +444,8 @@ namespace fc {
 
                 // slog( "jump to %p from %p", next, prev );
                 // fc_dlog( logger::get("fc_context"), "from ${from} to ${to}", ( "from", int64_t(prev) )( "to", int64_t(next) ) );
-#if BOOST_VERSION >= 105600
                 bc::detail::transfer_t rj = bc::detail::jump_fcontext( next->my_context, this );
                 static_cast<thread_d*>(rj.data)->old->my_context = rj.fctx;
-#elif BOOST_VERSION >= 105300
-                bc::jump_fcontext( prev->my_context, next->my_context, (intptr_t)this );
-#else
-                bc::jump_fcontext( &prev->my_context, &next->my_context, (intptr_t)this );
-#endif
                 // DDLOG("JUMP_IN: this=%p, current=%p(my_context=%p), next=%p(my_context=%p)", this, current, current ? current->my_context : 0, next, next ? next->my_context : 0);
                 BOOST_ASSERT( current );
                 BOOST_ASSERT( current == prev );

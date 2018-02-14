@@ -10,7 +10,10 @@
 # include <boost/coroutine/stack_context.hpp>
   namespace bc  = boost::context;
   namespace bco = boost::coroutines;
-# if !defined(NDEBUG)
+# if defined(NDEBUG)
+#  include <boost/coroutine/stack_allocator.hpp>
+  typedef bco::stack_allocator stack_allocator;
+#else
 #  include <boost/assert.hpp>
 #  include <boost/coroutine/protected_stack_allocator.hpp>
   typedef bco::protected_stack_allocator stack_allocator;

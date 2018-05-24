@@ -4,6 +4,8 @@
 #include <fc/log/logger.hpp>
 #include <fc/exception/exception.hpp>
 
+#include <string>
+
 namespace fc {
   namespace asio {
     namespace detail {

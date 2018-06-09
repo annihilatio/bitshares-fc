@@ -7,6 +7,8 @@
 
 #ifdef _WIN32
 # include <malloc.h>
+#include <BaseTsd.h>
+typedef SSIZE_T ssize_t;
 #else
 # include <alloca.h>
 #endif

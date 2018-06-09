@@ -105,7 +105,7 @@ namespace fc { namespace ecc {
             BN_rshift1( order, order );
             private_key_secret bin;
             FC_ASSERT( (size_t)BN_num_bytes( order ) == bin.data_size() );
-            FC_ASSERT( BN_bn2bin( order, (unsigned char*) bin.data() ) == (size_t)bin.data_size() );
+            FC_ASSERT( BN_bn2bin( order, (unsigned char*) bin.data() ) == (ssize_t)bin.data_size() );
             return bin;
         }
 

@@ -344,6 +344,7 @@ namespace fc {
    void thread::async_task( task_base* t, const priority& p, const time_point& tp ) {
       assert(my);
       t->_when = tp;
+      t->_prio = p;
      // slog( "when %lld", t->_when.time_since_epoch().count() );
      // slog( "delay %lld", (tp - fc::time_point::now()).count() );
       task_base* stale_head = my->task_in_queue.load(boost::memory_order_relaxed);

@@ -5,6 +5,9 @@
 #include <fc/exception/exception.hpp>
 #include <vector>
 
+#include <fc/thread/scoped_lock.hpp>
+#include <fc/thread/spin_lock.hpp>
+
 #include <boost/version.hpp>
 
 # include <boost/coroutine/stack_context.hpp>
@@ -23,7 +26,6 @@ namespace boost { namespace context { namespace detail {
     struct transfer_t;
 } } }
 
-
 namespace fc {
   class thread;
   class promise_base;
@@ -34,14 +36,36 @@ namespace fc {
    *  where it is blocked, what time it should resume, priority,
    *  etc.
    */
+  
+  class context_counter
+  {
+    context_counter(): m_count(0){}
+    ~context_counter(){}
+    uint32_t count_impl()
+    {
+      scoped_lock<spin_lock> lock(m_lock);
+      return ++m_count;
+    }
+    uint32_t m_count;
+    spin_lock m_lock;
+  public:
+    static uint32_t count()
+    {
+      static context_counter counter;
+      return counter.count_impl();
+    }
+  };
+  
   struct context  {
     typedef fc::context* ptr;
 
+    uint32_t context_id;
     bco::stack_context stack_ctx;
 
 
     context( void (*sf)(boost::context::detail::transfer_t), stack_allocator& alloc, fc::thread* t )
-    : caller_context(0),
+    : context_id(context_counter::count()),
+      caller_context(0),
       stack_alloc(&alloc),
       next_blocked(0), 
       next_blocked_mutex(0), 
@@ -62,20 +86,21 @@ namespace fc {
     }
 
     context( fc::thread* t) :
-     my_context(nullptr),
-     caller_context(0),
-     stack_alloc(0),
-     next_blocked(0), 
-     next_blocked_mutex(0), 
-     next(0), 
-     ctx_thread(t),
-     canceled(false),
+      context_id(0),
+      my_context(nullptr),
+      caller_context(0),
+      stack_alloc(0),
+      next_blocked(0),
+      next_blocked_mutex(0),
+      next(0),
+      ctx_thread(t),
+      canceled(false),
 #ifndef NDEBUG
-     cancellation_reason(nullptr),
+      cancellation_reason(nullptr),
 #endif
-     complete(false),
-     cur_task(0),
-     context_posted_num(0)
+      complete(false),
+      cur_task(0),
+      context_posted_num(0)
     { /* DDLOG("Created fc::context at %p with NULL my_context", this); */ }
 
     ~context() {

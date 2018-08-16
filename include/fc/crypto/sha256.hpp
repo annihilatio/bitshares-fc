@@ -8,7 +8,7 @@
 namespace fc
 {
 
-class sha256 
+class sha256
 {
   public:
     sha256();

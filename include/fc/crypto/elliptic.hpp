@@ -18,10 +18,11 @@ namespace fc {
 
     typedef fc::sha256                  blind_factor_type;
     typedef fc::array<char,33>          commitment_type;
-    typedef fc::array<char,33>          public_key_data;
+    typedef fc::array<char,33>          public_key_data_bts;
     typedef fc::sha256                  private_key_secret;
     typedef fc::array<char,65>          public_key_point_data; ///< the full non-compressed version of the ECC point
     typedef fc::array<char,72>          signature;
+//    typedef fc::array<char,65>          ether_signature;
     typedef fc::array<unsigned char,65> compact_signature;
     typedef std::vector<char>           range_proof_type;
     typedef fc::array<char,78>          extended_key_data;
@@ -39,13 +40,13 @@ namespace fc {
            public_key(const public_key& k);
            ~public_key();
 //           bool verify( const fc::sha256& digest, const signature& sig );
-           public_key_data serialize()const;
+           public_key_data_bts serialize()const;
            public_key_point_data serialize_ecc_point()const;
 
-           operator public_key_data()const { return serialize(); }
+           operator public_key_data_bts()const { return serialize(); }
 
 
-           public_key( const public_key_data& v );
+           public_key( const public_key_data_bts& v );
            public_key( const public_key_point_data& v );
            public_key( const compact_signature& c, const fc::sha256& digest, bool check_canonical = true );
 
@@ -73,14 +74,14 @@ namespace fc {
 
            /// Allows to convert current public key object into base58 number.
            std::string to_base58() const;
-           static std::string to_base58( const public_key_data &key );
+           static std::string to_base58( const public_key_data_bts &key );
            static public_key from_base58( const std::string& b58 );
 
            unsigned int fingerprint() const;
 
         private:
           friend class private_key;
-          static public_key from_key_data( const public_key_data& v );
+          static public_key from_key_data( const public_key_data_bts& v );
           static bool is_canonical( const compact_signature& c );
           fc::fwd<detail::public_key_impl,33> my;
     };
@@ -262,7 +263,7 @@ namespace fc {
       template<typename Stream>
       void unpack( Stream& s, fc::ecc::public_key& pk)
       {
-          ecc::public_key_data ser;
+          ecc::public_key_data_bts ser;
           fc::raw::unpack(s,ser);
           pk = fc::ecc::public_key( ser );
       }

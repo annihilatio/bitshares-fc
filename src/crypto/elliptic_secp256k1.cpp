@@ -47,12 +47,12 @@ namespace fc { namespace ecc {
                 {
                     _init_lib();
                 }
-
-                public_key_data _key;
+  
+            public_key_data_bts _key;
         };
 
         typedef fc::array<char,37> chr37;
-        chr37 _derive_message( const public_key_data& key, int i );
+        chr37 _derive_message( const public_key_data_bts & key, int i );
         fc::sha256 _left( const fc::sha512& v );
         fc::sha256 _right( const fc::sha512& v );
         const ec_group& get_curve();
@@ -60,14 +60,14 @@ namespace fc { namespace ecc {
         const private_key_secret& get_half_curve_order();
     }
 
-    static const public_key_data empty_pub;
+    static const public_key_data_bts  empty_pub;
     static const private_key_secret empty_priv;
 
     fc::sha512 private_key::get_shared_secret( const public_key& other )const
     {
       FC_ASSERT( my->_key != empty_priv );
       FC_ASSERT( other.my->_key != empty_pub );
-      public_key_data pub(other.my->_key);
+      public_key_data_bts pub(other.my->_key);
       FC_ASSERT( secp256k1_ec_pubkey_tweak_mul( detail::_get_context(), (unsigned char*) pub.begin(), pub.size(), (unsigned char*) my->_key.data() ) );
       return fc::sha512::hash( pub.begin() + 1, pub.size() - 1 );
     }
@@ -101,7 +101,7 @@ namespace fc { namespace ecc {
     public_key public_key::add( const fc::sha256& digest )const
     {
         FC_ASSERT( my->_key != empty_pub );
-        public_key_data new_key;
+        public_key_data_bts  new_key;
         memcpy( new_key.begin(), my->_key.begin(), new_key.size() );
         FC_ASSERT( secp256k1_ec_pubkey_tweak_add( detail::_get_context(), (unsigned char*) new_key.begin(), new_key.size(), (unsigned char*) digest.data() ) );
         return public_key( new_key );
@@ -113,7 +113,7 @@ namespace fc { namespace ecc {
         return to_base58( my->_key );
     }
 
-    public_key_data public_key::serialize()const
+    public_key_data_bts public_key::serialize()const
     {
         FC_ASSERT( my->_key != empty_pub );
         return my->_key;
@@ -146,7 +146,7 @@ namespace fc { namespace ecc {
         }
     }
 
-    public_key::public_key( const public_key_data& dat )
+    public_key::public_key( const public_key_data_bts& dat )
     {
         my->_key = dat;
     }
@@ -174,7 +174,7 @@ namespace fc { namespace ecc {
     extended_public_key extended_public_key::derive_normal_child(int i) const
     {
         hmac_sha512 mac;
-        public_key_data key = serialize();
+        public_key_data_bts key = serialize();
         const detail::chr37 data = detail::_derive_message( key, i );
         fc::sha512 l = mac.digest( c.data(), c.data_size(), data.begin(), data.size() );
         fc::sha256 left = detail::_left(l);
@@ -238,7 +238,7 @@ namespace fc { namespace ecc {
         from_bignum( bn_inv, out );
     }
 
-    static void to_point( const public_key_data& in, ec_point& out )
+    static void to_point( const public_key_data_bts& in, ec_point& out )
     {
         bn_ctx ctx( BN_CTX_new() );
         const ec_group& curve = detail::get_curve();
@@ -249,7 +249,7 @@ namespace fc { namespace ecc {
         FC_ASSERT( EC_POINT_set_compressed_coordinates_GFp( curve, out, bn_x, *in.begin() & 1, ctx ) > 0 );
     }
 
-    static void from_point( const ec_point& in, public_key_data& out )
+    static void from_point( const ec_point& in, public_key_data_bts& out )
     {
         bn_ctx ctx( BN_CTX_new() );
         const ec_group& curve = detail::get_curve();
@@ -297,7 +297,7 @@ namespace fc { namespace ecc {
         private_key_secret prod = a;
         FC_ASSERT( secp256k1_ec_privkey_tweak_mul( detail::_get_context(), (unsigned char*) prod.data(), (unsigned char*) c.data() ) > 0 );
         invert( prod, prod );
-        public_key_data P = p.serialize();
+        public_key_data_bts P = p.serialize();
         FC_ASSERT( secp256k1_ec_pubkey_tweak_mul( detail::_get_context(), (unsigned char*) P.begin(), P.size(), (unsigned char*) prod.data() ) );
 //        printf("K: "); print(P); printf("\n");
         return public_key( P );
@@ -305,14 +305,14 @@ namespace fc { namespace ecc {
 
     static public_key compute_t( const private_key_secret& a, const private_key_secret& b,
                                  const private_key_secret& c, const private_key_secret& d,
-                                 const public_key_data& p, const public_key_data& q )
+                                 const public_key_data_bts& p, const public_key_data_bts& q )
     {
         private_key_secret prod;
         invert( c, prod ); // prod == c^-1
         FC_ASSERT( secp256k1_ec_privkey_tweak_mul( detail::_get_context(), (unsigned char*) prod.data(), (unsigned char*) d.data() ) > 0 );
         // prod == c^-1 * d
-
-        public_key_data accu = p;
+    
+        public_key_data_bts accu = p;
         FC_ASSERT( secp256k1_ec_pubkey_tweak_mul( detail::_get_context(), (unsigned char*) accu.begin(), accu.size(), (unsigned char*) prod.data() ) );
         // accu == prod * P == c^-1 * d * P
 
@@ -327,8 +327,8 @@ namespace fc { namespace ecc {
 
         FC_ASSERT( secp256k1_ec_pubkey_tweak_add( detail::_get_context(), (unsigned char*) accu.begin(), accu.size(), (unsigned char*) b.data() ) );
         // accu == c^-1 * a * P + Q + b*G
-
-        public_key_data k = compute_k( a, c, p ).serialize();
+    
+        public_key_data_bts k = compute_k( a, c, p ).serialize();
         memcpy( prod.data(), k.begin() + 1, prod.data_size() );
         // prod == Kx
         FC_ASSERT( secp256k1_ec_privkey_tweak_mul( detail::_get_context(), (unsigned char*) prod.data(), (unsigned char*) a.data() ) > 0 );
@@ -364,8 +364,8 @@ namespace fc { namespace ecc {
         private_key_secret b = generate_b(i).get_secret();
         private_key_secret c = generate_c(i).get_secret();
         private_key_secret d = generate_d(i).get_secret();
-        public_key_data p = bob.generate_p(i).serialize();
-        public_key_data q = bob.generate_q(i).serialize();
+        public_key_data_bts p = bob.generate_p(i).serialize();
+        public_key_data_bts q = bob.generate_q(i).serialize();
 //        printf("a: "); print(a); printf("\n");
 //        printf("b: "); print(b); printf("\n");
 //        printf("c: "); print(c); printf("\n");
@@ -423,8 +423,8 @@ namespace fc { namespace ecc {
         private_key_secret d = generate_d(i).get_secret();
         public_key p = bob.generate_p(i);
         public_key q = bob.generate_q(i);
-        public_key_data k = compute_k( a, c, p );
-        public_key_data t = compute_t( a, b, c, d, p, q ).serialize();
+        public_key_data_bts k = compute_k( a, c, p );
+        public_key_data_bts t = compute_t( a, b, c, d, p, q ).serialize();
 
         FC_ASSERT( secp256k1_ec_privkey_tweak_mul( detail::_get_context(), (unsigned char*) c.data(), (unsigned char*) sig.data() ) > 0 );
         FC_ASSERT( secp256k1_ec_privkey_tweak_add( detail::_get_context(), (unsigned char*) c.data(), (unsigned char*) d.data() ) > 0 );

@@ -70,7 +70,7 @@ namespace fc { namespace ecc {
     public_key private_key::get_public_key()const
     {
        FC_ASSERT( my->_key != empty_priv );
-       public_key_data pub;
+       public_key_data_bts pub;
        unsigned int pk_len;
        FC_ASSERT( secp256k1_ec_pubkey_create( detail::_get_context(), (unsigned char*) pub.begin(), (int*) &pk_len, (unsigned char*) my->_key.data(), 1 ) );
        FC_ASSERT( pk_len == pub.size() );

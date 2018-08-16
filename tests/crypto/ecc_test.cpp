@@ -100,6 +100,7 @@ int main( int argc, char** argv )
    fc::sha512 shared = priv1.get_shared_secret( pub );
    interop_do(shared);
 
+//TODO:   static_assert(false, "need to replace on ethereum key");
    auto sig = priv.sign_compact( h );
    interop_do(sig);
    auto recover = fc::ecc::public_key( sig, h );

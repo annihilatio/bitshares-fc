@@ -59,7 +59,10 @@ set( SECP256K1_DIR "${CMAKE_CURRENT_SOURCE_DIR}/vendor/secp256k1-zkp" )
 file( GLOB SECP256K1_SOURCES "${SECP256K1_DIR}/src/secp256k1.c" )
 add_library( secp256k1 ${SECP256K1_SOURCES} )
 
-target_include_directories( secp256k1 PRIVATE "${SECP256K1_DIR}" PUBLIC "${SECP256K1_DIR}/include" )
+target_include_directories( secp256k1
+        PRIVATE "${SECP256K1_DIR}"
+        PUBLIC "${SECP256K1_DIR}/include"
+)
 
 set( SECP256K1_BUILD_DEFINES
      USE_FIELD_10X26
@@ -329,7 +332,9 @@ target_include_directories(fc
 
   PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}
     ${CMAKE_CURRENT_SOURCE_DIR}/vendor/secp256k1-zkp
-  )
+
+  PUBLIC "${CMAKE_SOURCE_DIR}/libraries/ethereum/include"
+)
 
 #target_link_libraries( fc PUBLIC ${Boost_LIBRARIES} ${OPENSSL_LIBRARIES} ${ZLIB_LIBRARIES} ${BZIP2_LIBRARIES} ${PLATFORM_SPECIFIC_LIBS} ${RPCRT4} ${CMAKE_DL_LIBS} ${rt_library} ${ECC_LIB} )
 IF(NOT WIN32)

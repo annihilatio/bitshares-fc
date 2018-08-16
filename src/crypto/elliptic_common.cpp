@@ -64,7 +64,7 @@ namespace fc { namespace ecc {
             return result;
         }
 
-        chr37 _derive_message( const public_key_data& key, int i )
+        chr37 _derive_message( const public_key_data_bts& key, int i )
         {
             return _derive_message( *key.begin(), key.begin() + 1, i );
         }
@@ -118,7 +118,7 @@ namespace fc { namespace ecc {
         }
     }
 
-    public_key public_key::from_key_data( const public_key_data &data ) {
+    public_key public_key::from_key_data( const public_key_data_bts &data ) {
         return public_key(data);
     }
 
@@ -139,7 +139,7 @@ namespace fc { namespace ecc {
        return generate_from_seed( get_secret(), enc.result() );
     }
 
-    std::string public_key::to_base58( const public_key_data &key )
+    std::string public_key::to_base58( const public_key_data_bts &key )
     {
       uint32_t check = (uint32_t)sha256::hash(key.data, sizeof(key))._hash[0];
       assert(key.size() + sizeof(check) == 37);
@@ -154,8 +154,8 @@ namespace fc { namespace ecc {
         array<char, 37> data;
         size_t s = fc::from_base58(b58, (char*)&data, sizeof(data) );
         FC_ASSERT( s == sizeof(data) );
-
-        public_key_data key;
+  
+        public_key_data_bts key;
         uint32_t check = (uint32_t)sha256::hash(data.data, sizeof(key))._hash[0];
         FC_ASSERT( memcmp( (char*)&check, data.data + sizeof(key), sizeof(check) ) == 0 );
         memcpy( (char*)key.data, data.data, sizeof(key) );
@@ -164,7 +164,7 @@ namespace fc { namespace ecc {
 
     unsigned int public_key::fingerprint() const
     {
-        public_key_data key = serialize();
+        public_key_data_bts key = serialize();
         ripemd160 hash = ripemd160::hash( sha256::hash( key.begin(), key.size() ) );
         unsigned char* fp = (unsigned char*) hash._hash;
         return (fp[0] << 24) | (fp[1] << 16) | (fp[2] << 8) | fp[3];
@@ -267,7 +267,7 @@ namespace fc { namespace ecc {
         detail::_put( &dest, parent_fp );
         detail::_put( &dest, child_num );
         memcpy( dest, c.data(), c.data_size() ); dest += 32;
-        public_key_data key = serialize();
+        public_key_data_bts key = serialize();
         memcpy( dest, key.begin(), key.size() );
         return result;
     }
@@ -293,7 +293,7 @@ namespace fc { namespace ecc {
         int cn = detail::_get( &ptr );
         fc::sha256 chain;
         memcpy( chain.data(), ptr, chain.data_size() ); ptr += chain.data_size();
-        public_key_data key;
+        public_key_data_bts key;
         memcpy( key.begin(), ptr, key.size() );
         return extended_public_key( key, chain, cn, fp, d );
     }
@@ -409,7 +409,7 @@ void to_variant( const ecc::public_key& var,  variant& vo )
 
 void from_variant( const variant& var,  ecc::public_key& vo )
 {
-    ecc::public_key_data dat;
+    ecc::public_key_data_bts dat;
     from_variant( var, dat );
     vo = ecc::public_key(dat);
 }

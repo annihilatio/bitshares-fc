@@ -15,6 +15,8 @@
 #include <map>
 #include <deque>
 
+#include <ethereum/crypto/Common.h>
+
 namespace fc {
     namespace raw {
 
@@ -124,6 +126,17 @@ namespace fc {
       s.write((const char*)&v.data[0],N*sizeof(T));
     }
 
+
+    template<typename Stream>
+    inline void pack( Stream& s, const dev::Address& v) {
+      s.write((const char*)v.data(),v.size);
+    }
+
+    template<typename Stream>
+    inline void pack( Stream& s, const dev::Signature& v) {
+      s.write((const char*)v.data(),v.size);
+    }
+    
     template<typename Stream, typename T>
     inline void pack( Stream& s, const std::shared_ptr<T>& v)
     {
@@ -136,6 +149,18 @@ namespace fc {
       s.read((char*)&v.data[0],N*sizeof(T));
     } FC_RETHROW_EXCEPTIONS( warn, "fc::array<type,length>", ("type",fc::get_typename<T>::name())("length",N) ) }
 
+    template<typename Stream>
+    inline void unpack( Stream& s, dev::Signature& v)
+    { try {
+        s.read((char*)v.data(),v.size);
+    } FC_RETHROW_EXCEPTIONS( warn, "dev::Signature" ) }
+
+    template<typename Stream>
+    inline void unpack( Stream& s, dev::Address& v)
+    { try {
+        s.read((char*)v.data(),v.size);
+    } FC_RETHROW_EXCEPTIONS( warn, "dev::Address" ) }
+    
     template<typename Stream, typename T>
     inline void unpack( Stream& s, std::shared_ptr<T>& v)
     { try {
@@ -299,9 +324,13 @@ namespace fc {
       template<typename IsClass=fc::true_type>
       struct if_class{
         template<typename Stream, typename T>
-        static inline void pack( Stream& s, const T& v ) { s << v; }
+        static inline void pack( Stream& s, const T& v ) {
+          s << v;
+        }
         template<typename Stream, typename T>
-        static inline void unpack( Stream& s, T& v ) { s >> v; }
+        static inline void unpack( Stream& s, T& v ) {
+          s >> v;
+        }
       };
 
       template<>
@@ -345,7 +374,7 @@ namespace fc {
       struct if_reflected {
         template<typename Stream, typename T>
         static inline void pack( Stream& s, const T& v ) {
-          if_class<typename fc::is_class<T>::type>::pack(s,v);
+         if_class<typename fc::is_class<T>::type>::pack(s,v);
         }
         template<typename Stream, typename T>
         static inline void unpack( Stream& s, T& v ) {
@@ -481,6 +510,7 @@ namespace fc {
       auto itr = value.begin();
       auto end = value.end();
       while( itr != end ) {
+//        static_assert(!std::is_same<const dev::Signature&, decltype(*itr)>::value, "");
         fc::raw::pack( s, *itr );
         ++itr;
       }

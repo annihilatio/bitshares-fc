@@ -31,6 +31,8 @@ SET( CMAKE_DEBUG_POSTFIX _debug )
 SET( BUILD_SHARED_LIBS NO )
 SET( ECC_IMPL secp256k1 CACHE STRING "secp256k1 or openssl or mixed" )
 
+add_definitions(-DENABLE_MODULE_RECOVERY -DENABLE_MODULE_ECDH)
+
 set(platformBitness 32)
 if(CMAKE_SIZEOF_VOID_P EQUAL 8)
   set(platformBitness 64)
@@ -56,12 +58,30 @@ ENDIF( ECC_IMPL STREQUAL openssl )
 # Configure secp256k1-zkp
 set( SECP256K1_DIR "${CMAKE_CURRENT_SOURCE_DIR}/vendor/secp256k1-zkp" )
 
-file( GLOB SECP256K1_SOURCES "${SECP256K1_DIR}/src/secp256k1.c" )
+file( GLOB SECP256K1_SOURCES
+        "${SECP256K1_DIR}/src/ec*.c"
+        "${SECP256K1_DIR}/src/gen*.c"
+        "${SECP256K1_DIR}/src/secp*.c"
+)
+
+file( GLOB SECP256K1_HEADERS
+        "${SECP256K1_DIR}/src/basic*.h"
+        "${SECP256K1_DIR}/src/ec*.h"
+        "${SECP256K1_DIR}/src/field*.h"
+        "${SECP256K1_DIR}/src/g*.h"
+        "${SECP256K1_DIR}/src/h*.h"
+        "${SECP256K1_DIR}/src/n*.h"
+        "${SECP256K1_DIR}/src/s*.h"
+        "${SECP256K1_DIR}/src/u*.h"
+)
 add_library( secp256k1 ${SECP256K1_SOURCES} )
+
+add_definitions( -DVERIFY )
 
 target_include_directories( secp256k1
         PRIVATE "${SECP256K1_DIR}"
         PUBLIC "${SECP256K1_DIR}/include"
+        PUBLIC "${SECP256K1_DIR}/src"
 )
 
 set( SECP256K1_BUILD_DEFINES

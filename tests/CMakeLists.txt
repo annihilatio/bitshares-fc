@@ -5,11 +5,6 @@ target_link_libraries( bip_lock fc )
 add_executable( api api.cpp )
 target_link_libraries( api fc )
 
-if( ECC_IMPL STREQUAL secp256k1 )
-    add_executable( blind all_tests.cpp crypto/blind.cpp )
-    target_link_libraries( blind fc )
-endif()
-
 add_executable( task_cancel_test all_tests.cpp thread/task_cancel.cpp thread/tctx.cpp)
 target_link_libraries( task_cancel_test fc )
 
@@ -22,12 +17,6 @@ target_link_libraries( real128_test fc )
 
 add_executable( hmac_test hmac_test.cpp )
 target_link_libraries( hmac_test fc )
-
-add_executable( blinding_test blinding_test.cpp )
-target_link_libraries( blinding_test fc )
-
-add_executable( ecc_test crypto/ecc_test.cpp )
-target_link_libraries( ecc_test fc )
 
 add_executable( log_test crypto/log_test.cpp )
 target_link_libraries( log_test fc )
@@ -44,7 +33,6 @@ add_executable( all_tests all_tests.cpp
                           crypto/aes_test.cpp
                           crypto/base_n_tests.cpp
                           crypto/bigint_test.cpp
-                          crypto/blind.cpp
                           crypto/dh_test.cpp
                           crypto/rand_test.cpp
                           crypto/sha_tests.cpp

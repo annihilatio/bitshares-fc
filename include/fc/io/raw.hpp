@@ -136,6 +136,11 @@ namespace fc {
     inline void pack( Stream& s, const dev::Signature& v) {
       s.write((const char*)v.data(),v.size);
     }
+
+    template<typename Stream>
+    inline void pack( Stream& s, const dev::h256& v) {
+      s.write((const char*)v.data(),v.size);
+    }
     
     template<typename Stream, typename T>
     inline void pack( Stream& s, const std::shared_ptr<T>& v)
@@ -160,6 +165,12 @@ namespace fc {
     { try {
         s.read((char*)v.data(),v.size);
     } FC_RETHROW_EXCEPTIONS( warn, "dev::Address" ) }
+
+    template<typename Stream>
+    inline void unpack( Stream& s, dev::h256& v)
+    { try {
+        s.read((char*)v.data(),v.size);
+      } FC_RETHROW_EXCEPTIONS( warn, "dev::h256" ) }
     
     template<typename Stream, typename T>
     inline void unpack( Stream& s, std::shared_ptr<T>& v)

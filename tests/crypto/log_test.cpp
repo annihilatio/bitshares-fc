@@ -18,26 +18,26 @@ uint64_t endian_reverse( uint64_t x )
    uint64_t x5 = ((x >> 0x28) & 0xFF);
    uint64_t x6 = ((x >> 0x30) & 0xFF);
    uint64_t x7 = ((x >> 0x38) & 0xFF);
-
+   
    return (x0 << 0x38)
-        | (x1 << 0x30)
-        | (x2 << 0x28)
-        | (x3 << 0x20)
-        | (x4 << 0x18)
-        | (x5 << 0x10)
-        | (x6 << 0x08)
-        | (x7        );
+          | (x1 << 0x30)
+          | (x2 << 0x28)
+          | (x3 << 0x20)
+          | (x4 << 0x18)
+          | (x5 << 0x10)
+          | (x6 << 0x08)
+          | (x7        );
 }
 
 int main(int argc, char**argv, char** envp)
-{
+{ //TODO: may be need to make standalone test for sha3 function
    std::ifstream infile("log_test.txt");
    uint32_t ref_clz;
    std::string str_h;
    uint32_t ref_log;
    uint32_t cases = 0;
    uint32_t errors = 0;
-
+   
    while( true )
    {
       if( !(infile >> std::hex >> ref_clz) )
@@ -64,7 +64,7 @@ int main(int argc, char**argv, char** envp)
          std::cerr << "got error on ilog(" << ref_log << ")" << std::endl;
          ++errors;
       }
-
+      
       std::string str_ilog_h = h.str();
       boost::multiprecision::uint256_t u256_ilog_h( "0x" + str_ilog_h );
       double d_ilog_h_ref = u256_ilog_h.template convert_to<double>();
@@ -73,7 +73,7 @@ int main(int argc, char**argv, char** envp)
          std::cerr << "got error on d_ilog(" << ref_log << ")" << std::endl;
          ++errors;
       }
-
+      
       if( h != fc::sha256() )
       {
          fc::sha256 h_before = h;
@@ -103,10 +103,10 @@ int main(int argc, char**argv, char** envp)
             ++errors;
          }
       }
-
+      
       ++cases;
    }
-
+   
    std::cerr << "sha256_log_test checked " << cases << " cases, got " << errors << " errors" << std::endl;
    if( errors )
       return 1;

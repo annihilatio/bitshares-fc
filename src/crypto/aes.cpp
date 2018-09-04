@@ -36,7 +36,7 @@ aes_encoder::~aes_encoder()
 {
 }
 
-void aes_encoder::init( const fc::sha256& key, const fc::uint128& init_value )
+void aes_encoder::init( const dev::Secret& key, const fc::uint128& init_value )
 {
     my->ctx.obj = EVP_CIPHER_CTX_new();
     /* Create and initialise the context */
@@ -51,7 +51,7 @@ void aes_encoder::init( const fc::sha256& key, const fc::uint128& init_value )
     *    In this example we are using 256 bit AES (i.e. a 256 bit key). The
     *    IV size for *most* modes is the same as the block size. For AES this
     *    is 128 bits */
-    if(1 != EVP_EncryptInit_ex(my->ctx, EVP_aes_256_cbc(), NULL, (unsigned char*)&key, (unsigned char*)&init_value))
+    if(1 != EVP_EncryptInit_ex(my->ctx, EVP_aes_256_cbc(), NULL, key.data(), (unsigned char*)&init_value))
     {
         FC_THROW_EXCEPTION( aes_exception, "error during aes 256 cbc encryption init", 
                            ("s", ERR_error_string( ERR_get_error(), nullptr) ) );
@@ -100,7 +100,7 @@ aes_decoder::aes_decoder()
   static int init = init_openssl();
   }
 
-void aes_decoder::init( const fc::sha256& key, const fc::uint128& init_value )
+void aes_decoder::init( const dev::Secret& key, const fc::uint128& init_value )
 {
     my->ctx.obj = EVP_CIPHER_CTX_new();
     /* Create and initialise the context */
@@ -115,7 +115,7 @@ void aes_decoder::init( const fc::sha256& key, const fc::uint128& init_value )
     *    In this example we are using 256 bit AES (i.e. a 256 bit key). The
     *    IV size for *most* modes is the same as the block size. For AES this
     *    is 128 bits */
-    if(1 != EVP_DecryptInit_ex(my->ctx, EVP_aes_256_cbc(), NULL, (unsigned char*)&key, (unsigned char*)&init_value))
+    if(1 != EVP_DecryptInit_ex(my->ctx, EVP_aes_256_cbc(), NULL, key.data(), (unsigned char*)&init_value))
     {
         FC_THROW_EXCEPTION( aes_exception, "error during aes 256 cbc encryption init", 
                            ("s", ERR_error_string( ERR_get_error(), nullptr) ) );

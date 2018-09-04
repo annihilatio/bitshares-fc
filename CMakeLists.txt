@@ -7,6 +7,8 @@ CMAKE_MINIMUM_REQUIRED( VERSION 2.8.12 )
 MESSAGE(STATUS "Configuring project fc located in: ${CMAKE_CURRENT_SOURCE_DIR}")
 SET( CMAKE_AUTOMOC OFF )
 
+SET(CMAKE_EXE_LINKER_FLAGS "-ldl -pthread")
+
 # Setup module path to make visible used CMake extensions
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/GitVersionGen")
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/CMakeModules")

@@ -1,6 +1,6 @@
 #include <fc/fwd_impl.hpp>
 
-#include <secp256k1.h>
+//#include <secp256k1.h>
 
 #include "_elliptic_impl_priv.hpp"
 
@@ -11,12 +11,12 @@ namespace fc { namespace ecc {
 
         private_key_impl::private_key_impl() BOOST_NOEXCEPT
         {
-            _init_lib();
+//            _init_lib();
         }
 
         private_key_impl::private_key_impl( const private_key_impl& cpy ) BOOST_NOEXCEPT
         {
-            _init_lib();
+  //          _init_lib();
             this->_key = cpy._key;
         }
 
@@ -72,7 +72,7 @@ namespace fc { namespace ecc {
        FC_ASSERT( my->_key != empty_priv );
        public_key_data pub;
        unsigned int pk_len;
-       FC_ASSERT( secp256k1_ec_pubkey_create( detail::_get_context(), (unsigned char*) pub.begin(), (int*) &pk_len, (unsigned char*) my->_key.data(), 1 ) );
+//       FC_ASSERT( secp256k1_ec_pubkey_create( detail::_get_context(), (unsigned char*) pub.begin(), (int*) &pk_len, (unsigned char*) my->_key.data(), 1 ) );
        FC_ASSERT( pk_len == pub.size() );
        return public_key(pub);
     }
@@ -82,9 +82,10 @@ namespace fc { namespace ecc {
                                         const void *data ) {
         unsigned int* extra = (unsigned int*) data;
         (*extra)++;
-        return secp256k1_nonce_function_default( nonce32, msg32, key32, *extra, nullptr );
+        //return secp256k1_nonce_function_default( nonce32, msg32, key32, *extra, nullptr );
+        return 1;
     }
-
+/*
     compact_signature private_key::sign_compact( const fc::sha256& digest, bool require_canonical )const
     {
         FC_ASSERT( my->_key != empty_priv );
@@ -98,5 +99,5 @@ namespace fc { namespace ecc {
         result.begin()[0] = 27 + 4 + recid;
         return result;
     }
-
+*/
 }}

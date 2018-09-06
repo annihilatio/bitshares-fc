@@ -8,8 +8,8 @@
 namespace fc { namespace ecc { namespace detail {
 
 
-const secp256k1_context_t* _get_context();
-void _init_lib();
+//const secp256k1_context_t* _get_context();
+//void _init_lib();
 
 class private_key_impl
 {

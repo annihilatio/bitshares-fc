@@ -11,6 +11,7 @@
 #include <fc/io/sstream.hpp>
 #include <fc/log/logger.hpp>
 #include <fc/string.hpp>
+#include <fc/crypto/hex.hpp>
 //#include <utfcpp/utf8.h>
 #include <iostream>
 #include <fstream>
@@ -20,7 +21,7 @@
 
 namespace fc { namespace json_relaxed
 {
-   template<typename T, bool strict>
+   template<typename T, bool strict, bool cmdline = false>
    variant variant_from_stream( T& in );
 
    template<typename T>
@@ -686,6 +687,44 @@ namespace fc { namespace json_relaxed
    }
    
    template<typename T, bool strict>
+   variant variant_from_fname_from_stream( T& in )
+   {
+       variant fname;
+       try
+       {
+           char c = in.peek();
+           if( (c != '@') && (c != '<') && (c != '%') )
+              FC_THROW_EXCEPTION( parse_error_exception,
+                                  "Expected '@' or '<', but read '${char}'",
+                                  ("char",string(&c, &c + 1)) );
+           in.get();
+
+           fname = variant_from_stream<T, strict, false>( in );
+           if( !fname.is_string() )
+               FC_THROW_EXCEPTION( parse_error_exception,
+                                                 "@filename (<filename) expects filename to be a string, but got vt=${vt}",
+                                                 ("vt",fname.get_type()) );
+
+           fc::string fdata;
+           read_file_contents(fname.get_string(), fdata);
+
+           if( c == '@' )
+           {
+               fc::stringstream ss( fdata );
+               return variant_from_stream<fc::stringstream, strict, true>( ss );
+           }
+           else if( c == '%' )
+           {
+               FC_ASSERT( static_cast<uint32_t>( fdata.size() ) == fdata.size() );
+               return variant( to_hex( fdata.data(), fdata.size() ) );
+           }
+           else // '<'
+               return variant( std::move( fdata ) );
+       }
+       FC_RETHROW_EXCEPTIONS( warn, "Atempting to use @fname for ${fname}", ("fname", fname ) );
+   }
+
+   template<typename T, bool strict, bool cmdline>
    variant variant_from_stream( T& in )
    {
       skip_white_space(in);
@@ -734,6 +773,12 @@ namespace fc { namespace json_relaxed
             case 0x04: // ^D end of transmission
             case EOF:
               FC_THROW_EXCEPTION( eof_exception, "unexpected end of file" );
+            case '@':
+            case '<':
+            case '%':
+                if(cmdline)
+                { return variant_from_fname_from_stream<T, strict>( in ); }
+                // !fallthrough
             default:
               FC_THROW_EXCEPTION( parse_error_exception, "Unexpected char '${c}' in \"${s}\"",
                                  ("c", c)("s", stringFromToken(in)) );

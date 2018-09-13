@@ -6,6 +6,7 @@
 #include <fc/thread/thread.hpp>
 #include <fc/variant.hpp>
 #include <boost/thread/mutex.hpp>
+#include <iostream>
 #include <iomanip>
 #include <queue>
 #include <sstream>

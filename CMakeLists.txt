@@ -19,6 +19,11 @@ INCLUDE(GetGitRevisionDescription)
 get_git_head_revision(GIT_REFSPEC FC_GIT_REVISION_SHA)
 get_git_unix_timestamp(FC_GIT_REVISION_UNIX_TIMESTAMP)
 
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fpermissive")
+IF(MINGW)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wa,-mbig-obj")
+ENDIF(MINGW)
+
 SET( DEFAULT_HEADER_INSTALL_DIR include/\${target} )
 SET( DEFAULT_LIBRARY_INSTALL_DIR lib/ )
 SET( DEFAULT_EXECUTABLE_INSTALL_DIR bin/ )
@@ -49,57 +54,20 @@ ELSE( ECC_IMPL STREQUAL openssl )
 ENDIF( ECC_IMPL STREQUAL openssl )
 
 # Configure secp256k1-zkp
-if ( MSVC )
-    # autoconf won't work here, hard code the defines
-    set( SECP256K1_DIR "${CMAKE_CURRENT_SOURCE_DIR}/vendor/secp256k1-zkp" )
+set( SECP256K1_DIR "${CMAKE_CURRENT_SOURCE_DIR}/vendor/secp256k1-zkp" )
 
-    file( GLOB SECP256K1_SOURCES "${SECP256K1_DIR}/src/secp256k1.c" )
-    add_library( secp256k1 ${SECP256K1_SOURCES} )
+file( GLOB SECP256K1_SOURCES "${SECP256K1_DIR}/src/secp256k1.c" )
+add_library( secp256k1 ${SECP256K1_SOURCES} )
 
-    target_include_directories( secp256k1 PRIVATE "${SECP256K1_DIR}" PUBLIC "${SECP256K1_DIR}/include" )
+target_include_directories( secp256k1 PRIVATE "${SECP256K1_DIR}" PUBLIC "${SECP256K1_DIR}/include" )
 
-    set( SECP256K1_BUILD_DEFINES
-        USE_FIELD_10X26
-        USE_FIELD_INV_BUILTIN
-        USE_NUM_NONE
-        USE_SCALAR_8X32
-        USE_SCALAR_INV_BUILTIN )
-    set_target_properties( secp256k1 PROPERTIES COMPILE_DEFINITIONS "${SECP256K1_BUILD_DEFINES}" LINKER_LANGUAGE C )
-else ( MSVC )
-    include(ExternalProject)
-    if ( MINGW )
-    ExternalProject_Add( project_secp256k1
-     PREFIX ${CMAKE_CURRENT_BINARY_DIR}/vendor/secp256k1-zkp
-     SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/vendor/secp256k1-zkp
-     CONFIGURE_COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/vendor/secp256k1-zkp/configure --prefix=${CMAKE_CURRENT_BINARY_DIR}/vendor/secp256k1-zkp --with-bignum=no  --host=x86_64-w64-mingw32
-     BUILD_COMMAND make
-     INSTALL_COMMAND true
-     BUILD_BYPRODUCTS ${CMAKE_CURRENT_BINARY_DIR}/vendor/secp256k1-zkp/src/project_secp256k1-build/.libs/libsecp256k1.a
-    )
-    else ( MINGW )
-    ExternalProject_Add( project_secp256k1
-     PREFIX ${CMAKE_CURRENT_BINARY_DIR}/vendor/secp256k1-zkp
-     SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/vendor/secp256k1-zkp
-     CONFIGURE_COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/vendor/secp256k1-zkp/configure --prefix=${CMAKE_CURRENT_BINARY_DIR}/vendor/secp256k1-zkp --with-bignum=no
-     BUILD_COMMAND make
-     INSTALL_COMMAND true
-     BUILD_BYPRODUCTS ${CMAKE_CURRENT_BINARY_DIR}/vendor/secp256k1-zkp/src/project_secp256k1-build/.libs/libsecp256k1.a
-    )
-    endif ( MINGW )
-    ExternalProject_Add_Step(project_secp256k1 autogen
-     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/vendor/secp256k1-zkp
-     COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/vendor/secp256k1-zkp/autogen.sh
-     DEPENDERS configure
-    )
-
-    ExternalProject_Get_Property(project_secp256k1 binary_dir)
-
-    add_library(secp256k1 STATIC IMPORTED)
-    set_property(TARGET secp256k1 PROPERTY IMPORTED_LOCATION ${binary_dir}/.libs/libsecp256k1${CMAKE_STATIC_LIBRARY_SUFFIX})
-    set_property(TARGET secp256k1 PROPERTY INTERFACE_INCLUDE_DIRECTORIES ${CMAKE_CURRENT_SOURCE_DIR}/vendor/secp256k1-zkp/include)
-    add_dependencies(secp256k1 project_secp256k1)
-    install( FILES ${binary_dir}/.libs/libsecp256k1${CMAKE_STATIC_LIBRARY_SUFFIX} DESTINATION lib/cryptonomex )
-endif ( MSVC )
+set( SECP256K1_BUILD_DEFINES
+     USE_FIELD_10X26
+     USE_FIELD_INV_BUILTIN
+     USE_NUM_NONE
+     USE_SCALAR_8X32
+     USE_SCALAR_INV_BUILTIN )
+set_target_properties( secp256k1 PROPERTIES COMPILE_DEFINITIONS "${SECP256K1_BUILD_DEFINES}" LINKER_LANGUAGE C )
 # End configure secp256k1-zkp
 
 IF( WIN32 )
@@ -113,14 +81,11 @@ IF( WIN32 )
   set(Boost_USE_MULTITHREADED ON)
   set(BOOST_ALL_DYN_LINK OFF) # force dynamic linking for all libraries
 
-  FIND_PACKAGE(Boost 1.53 REQUIRED COMPONENTS ${BOOST_COMPONENTS})
-  # For Boost 1.53 on windows, coroutine was not in BOOST_LIBRARYDIR and do not need it to build,  but if boost versin >= 1.54, find coroutine otherwise will cause link errors
-  IF(NOT "${Boost_VERSION}" MATCHES "1.53(.*)")
-    SET(BOOST_LIBRARIES_TEMP ${Boost_LIBRARIES})
-    FIND_PACKAGE(Boost 1.54 REQUIRED COMPONENTS coroutine)
-    LIST(APPEND BOOST_COMPONENTS coroutine)
-    SET(Boost_LIBRARIES ${BOOST_LIBRARIES_TEMP} ${Boost_LIBRARIES})
-  ENDIF()
+  FIND_PACKAGE(Boost 1.65 REQUIRED COMPONENTS ${BOOST_COMPONENTS})
+  SET(BOOST_LIBRARIES_TEMP ${Boost_LIBRARIES})
+  FIND_PACKAGE(Boost 1.65 REQUIRED COMPONENTS coroutine)
+  LIST(APPEND BOOST_COMPONENTS coroutine)
+  SET(Boost_LIBRARIES ${BOOST_LIBRARIES_TEMP} ${Boost_LIBRARIES})
 
   set( PLATFORM_SPECIFIC_LIBS wsock32.lib ws2_32.lib userenv.lib)
   # iphlpapi.lib
@@ -130,7 +95,7 @@ ELSE(WIN32)
 
   LIST(APPEND BOOST_COMPONENTS coroutine)
 
-  FIND_PACKAGE(Boost 1.53 REQUIRED COMPONENTS ${BOOST_COMPONENTS})
+  FIND_PACKAGE(Boost 1.65 REQUIRED COMPONENTS ${BOOST_COMPONENTS})
 
   SET(CMAKE_FIND_LIBRARY_SUFFIXES ".a;.so")
 
@@ -184,7 +149,6 @@ set( fc_sources
      src/io/varint.cpp
      src/io/console.cpp
      src/filesystem.cpp
-     src/interprocess/process.cpp
      src/interprocess/signals.cpp
      src/interprocess/file_mapping.cpp
      src/interprocess/mmap_struct.cpp
@@ -218,7 +182,6 @@ set( fc_sources
      src/crypto/sha224.cpp
      src/crypto/sha512.cpp
      src/crypto/dh.cpp
-     src/crypto/blowfish.cpp
      src/crypto/elliptic_common.cpp
      ${ECC_REST}
      src/crypto/elliptic_${ECC_IMPL}.cpp
@@ -365,7 +328,6 @@ target_include_directories(fc
     "${readline_includes}"
 
   PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}
-    ${CMAKE_CURRENT_SOURCE_DIR}/vendor/boost_1.51/include
     ${CMAKE_CURRENT_SOURCE_DIR}/vendor/secp256k1-zkp
   )
 
@@ -485,9 +447,9 @@ ENDIF()
        IF("${OPENSSL_ROOT_DIR}" STREQUAL "")
           get_filename_component(OPENSSL_ROOT_DIR "${OPENSSL_INCLUDE_DIR}/.." REALPATH)
        ENDIF()
-       SET(OPENSSL_CONF_SOURCE "${OPENSSL_ROOT_DIR}/ssl/openssl.cnf")
+       SET(OPENSSL_CONF_SOURCE "${OPENSSL_ROOT_DIR}/openssl.cnf")
        IF(MINGW)
-          SET(OPENSSL_CONF_SOURCE "${OPENSSL_ROOT_DIR}/openssl.cnf")
+          SET(OPENSSL_CONF_SOURCE "${OPENSSL_ROOT_DIR}/ssl/openssl.cnf")
        ENDIF(MINGW)
        SET(POST_BUILD_STEP_COMMANDS ${POST_BUILD_STEP_COMMANDS}
            COMMAND ${CMAKE_COMMAND} -E copy_if_different "${OPENSSL_CONF_SOURCE}" "${OPENSSL_CONF_TARGET}/openssl.cnf")

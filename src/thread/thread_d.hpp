@@ -24,6 +24,7 @@ namespace fc {
              next_posted_num(1),
              done(false),
              current(0),
+             old(0),
              pt_head(0),
              blocked(0),
              next_unused_task_storage_slot(0)
@@ -31,13 +32,14 @@ namespace fc {
              ,non_preemptable_scope_count(0)
 #endif
             { 
+              // DDLOG("Created fc::thread_d at %p", this);
               static boost::atomic<int> cnt(0);
               name = fc::string("th_") + char('a'+cnt++); 
-//              printf("thread=%p\n",this);
             }
 
             ~thread_d()
             {
+              // DDLOG("Destroyed fc::thread_d at %p(boost_thread=%p)", this, boost_thread);
               delete current;
               fc::context* temp;
               for (fc::context* ready_context : ready_heap)
@@ -81,6 +83,7 @@ namespace fc {
            bool                     done;
            fc::string               name;
            fc::context*             current;     // the currently-executing task in this thread
+           fc::context*             old;     // previous task in this thread - to update its my_context after switch
 
            fc::context*             pt_head;     // list of contexts that can be reused for new tasks
 
@@ -261,6 +264,7 @@ namespace fc {
 
           void move_newly_scheduled_tasks_to_task_pqueue()
           {
+            // DDLOG("-enter- thread=%p,my=%p",this, thread::current().my);
             BOOST_ASSERT(this == thread::current().my);
 
             // first, if there are any new tasks on 'task_in_queue', which is tasks that 
@@ -355,6 +359,7 @@ namespace fc {
             */
            bool start_next_fiber( bool reschedule = false ) 
            {
+              // DDLOG("-enter- this=%p, current=%p", this, current);
               /* If this assert fires, it means you are executing an operation that is causing
                * the current task to yield, but there is a ASSERT_TASK_NOT_PREEMPTED() in effect
                * (somewhere up the stack) */
@@ -379,6 +384,7 @@ namespace fc {
               if (!ready_heap.empty())
               {
                 fc::context* next = ready_pop_front();
+                // DDLOG("(with ready) this=%p, current=%p(my_context=%p), next=%p(my_context=%p)", this, current, current ? current->my_context : 0, next, next ? next->my_context : 0);
                 if (next == current)
                 {
                   // elog( "next == current... something went wrong" );
@@ -389,6 +395,7 @@ namespace fc {
 
                 // jump to next context, saving current context
                 fc::context* prev = current;
+                this->old = current;
                 current = next;
                 if (reschedule)
                 {
@@ -396,14 +403,15 @@ namespace fc {
                   add_context_to_ready_list(prev, true);
                 }
                 // slog( "jump to %p from %p", next, prev );
-                // fc_dlog( logger::get("fc_context"), "from ${from} to ${to}", ( "from", int64_t(prev) )( "to", int64_t(next) ) ); 
-#if BOOST_VERSION >= 105600
-                bc::jump_fcontext( &prev->my_context, next->my_context, 0 );
-#elif BOOST_VERSION >= 105300
-                bc::jump_fcontext( prev->my_context, next->my_context, 0 );
-#else
-                bc::jump_fcontext( &prev->my_context, &next->my_context, 0 );
-#endif
+                // fc_dlog( logger::get("fc_context"), "from ${from} to ${to}", ( "from", int64_t(prev) )( "to", int64_t(next) ) );
+  
+                //NOTE: uncomment this lines if you need to check boost context validity befoure switching the context
+                // char* ctrx_dbg_ptr = reinterpret_cast<char*>(next->my_context) + 0x38;
+                // char dbg = *ctrx_dbg_ptr;
+                
+                bc::detail::transfer_t rj = bc::detail::jump_fcontext( next->my_context, this );
+                static_cast<thread_d*>(rj.data)->old->my_context = rj.fctx;
+                // DDLOG("JUMP_IN: this=%p, current=%p(my_context=%p), next=%p(my_context=%p)", this, current, current ? current->my_context : 0, next, next ? next->my_context : 0);
                 BOOST_ASSERT( current );
                 BOOST_ASSERT( current == prev );
                 //current = prev;
@@ -429,7 +437,9 @@ namespace fc {
                   next = new fc::context( &thread_d::start_process_tasks, stack_alloc,
                                           &fc::thread::current() );
                 }
+                // DDLOG("(no ready) this=%p, current=%p(my_context=%p), next=%p(my_context=%p)", this, current, current ? current->my_context : 0, next, next ? next->my_context : 0);
 
+                this->old = current;
                 current = next;
                 if( reschedule )  
                 {
@@ -439,13 +449,14 @@ namespace fc {
 
                 // slog( "jump to %p from %p", next, prev );
                 // fc_dlog( logger::get("fc_context"), "from ${from} to ${to}", ( "from", int64_t(prev) )( "to", int64_t(next) ) );
-#if BOOST_VERSION >= 105600
-                bc::jump_fcontext( &prev->my_context, next->my_context, (intptr_t)this );
-#elif BOOST_VERSION >= 105300
-                bc::jump_fcontext( prev->my_context, next->my_context, (intptr_t)this );
-#else
-                bc::jump_fcontext( &prev->my_context, &next->my_context, (intptr_t)this );
-#endif
+  
+                //NOTE: uncomment this lines if you need to check boost context validity befoure switching the context
+                // char* ctrx_dbg_ptr = reinterpret_cast<char*>(next->my_context) + 0x38;
+                // char dbg = *ctrx_dbg_ptr;
+                
+                bc::detail::transfer_t rj = bc::detail::jump_fcontext( next->my_context, this );
+                static_cast<thread_d*>(rj.data)->old->my_context = rj.fctx;
+                // DDLOG("JUMP_IN: this=%p, current=%p(my_context=%p), next=%p(my_context=%p)", this, current, current ? current->my_context : 0, next, next ? next->my_context : 0);
                 BOOST_ASSERT( current );
                 BOOST_ASSERT( current == prev );
                 //current = prev;
@@ -467,9 +478,10 @@ namespace fc {
               return true;
            }
 
-           static void start_process_tasks( intptr_t my ) 
+           static void start_process_tasks( boost::context::detail::transfer_t tfr )
            {
-              thread_d* self = (thread_d*)my;
+              thread_d* self = (thread_d*)(tfr.data);
+              self->old->my_context = tfr.fctx;
               try 
               {
                 self->process_tasks();
@@ -517,6 +529,7 @@ namespace fc {
 
            void process_tasks() 
            {
+              // DDLOG("-enter- this=%p", this);
               while( !done || blocked ) 
               {
                 // move all new tasks to the task_pqueue

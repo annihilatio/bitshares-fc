@@ -76,6 +76,7 @@ namespace fc {
           try {
             set_thread_name(name.c_str()); // set thread's name for the debugger to display
             this->my = new thread_d(*this);
+            // DDLOG("Started fc::thread at %p with my=%p", this, my);
             current_thread() = this;
             p->set_value();
             exec();
@@ -89,6 +90,7 @@ namespace fc {
             //elog( "Caught unhandled exception %s", boost::current_exception_diagnostic_information().c_str() );
           }
       } );
+      // DDLOG("Created (& starting) fc::thread at %p with boost_thread=%p", this, t);
       p->wait();
       my->boost_thread = t;
       my->name = name;
@@ -96,19 +98,23 @@ namespace fc {
    }
    thread::thread( thread_d* ) {
      my = new thread_d(*this);
+     // DDLOG("Created fc::thread (Won't start it) at %p with my=%p", this, my);
    }
 
    thread::thread( thread&& m ) {
+    // DDLOG("Moving fc::thread from %p to %p with my=%p", &m, this, m.my);
     my = m.my;
     m.my = 0;
    }
 
    thread& thread::operator=(thread&& t ) {
+      // DDLOG("moving fc::thread from %p(my=%p) to %p", &t, t.my, this);
       fc_swap(t.my,my);
       return *this;
    }
 
    thread::~thread() {
+      // DDLOG("Destroying fc::thread at %p(my=%p)", this, my);
       //wlog( "my ${n}", ("n",name()) );
       if( my )
       {
@@ -119,7 +125,10 @@ namespace fc {
 
    thread& thread::current() {
      if( !current_thread() )
+     {
        current_thread() = new thread((thread_d*)0);
+       // DDLOG("Creating fc::thread descriptor");
+     }
      return *current_thread();
    }
 
@@ -130,6 +139,7 @@ namespace fc {
 
    void thread::set_name( const fc::string& n )
    {
+     // DDLOG("fc::thread cur=%d,this=%p,name=%s", (int)(is_current()), this, n.c_str());
      if (!is_current())
      {
        async([=](){ set_name(n); }, "set_name").wait();
@@ -334,6 +344,7 @@ namespace fc {
    void thread::async_task( task_base* t, const priority& p, const time_point& tp ) {
       assert(my);
       t->_when = tp;
+      t->_prio = p;
      // slog( "when %lld", t->_when.time_since_epoch().count() );
      // slog( "delay %lld", (tp - fc::time_point::now()).count() );
       task_base* stale_head = my->task_in_queue.load(boost::memory_order_relaxed);

@@ -469,9 +469,11 @@ namespace fc
           case legacy_parser_with_string_doubles:
               return variant_from_stream<fc::stringstream, legacy_parser_with_string_doubles>( in );
           case strict_parser:
-              return json_relaxed::variant_from_stream<fc::stringstream, true>( in );
+              return json_relaxed::variant_from_stream<fc::stringstream, true,  false>( in );
           case relaxed_parser:
-              return json_relaxed::variant_from_stream<fc::stringstream, false>( in );
+              return json_relaxed::variant_from_stream<fc::stringstream, false, false>( in );
+          case cmdline_parser:
+              return json_relaxed::variant_from_stream<fc::stringstream, false, true> ( in );
           default:
               FC_ASSERT( false, "Unknown JSON parser type {ptype}", ("ptype", ptype) );
       }
@@ -487,7 +489,10 @@ namespace fc
          while( true )
          {
            // result.push_back( variant_from_stream( in ));
-           result.push_back(json_relaxed::variant_from_stream<fc::stringstream, false>( in ));
+           result.push_back(
+              (ptype == cmdline_parser) ?
+              json_relaxed::variant_from_stream<fc::stringstream, false, true> ( in ) :
+              json_relaxed::variant_from_stream<fc::stringstream, false, false>( in )   );
          }
       } catch ( const fc::eof_exception& ){}
       return result;

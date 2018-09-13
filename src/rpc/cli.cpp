@@ -103,7 +103,7 @@ void cli::run()
          }
          std::cout << line << "\n";
          line += char(EOF);
-         fc::variants args = fc::json::variants_from_string(line);;
+         fc::variants args = fc::json::variants_from_string(line, json::cmdline_parser);;
          if( args.size() == 0 )
             continue;
 
@@ -136,7 +136,7 @@ char * dupstr (const char* s) {
 
 char* my_generator(const char* text, int state)
 {
-   static int list_index, len;
+   static size_t list_index, len;
    const char *name;
 
    if (!state) {

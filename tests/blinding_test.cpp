@@ -275,12 +275,27 @@ BOOST_AUTO_TEST_CASE(openssl_blinding)
     BN_mod_add(blind_sig, blind_sig, q, n, ctx);
 
     fc::ecdsa_sig sig(ECDSA_SIG_new());
-    BN_copy(sig->r, Kx);
-    BN_mod_mul(sig->s, c, blind_sig, n, ctx);
-    BN_mod_add(sig->s, sig->s, d, n, ctx);
+    {
+        fc::ssl_bignum tn;
+        BN_copy(tn, Kx);
+        int r = ECDSA_SIG_set0(sig, tn, NULL);
+        if(r)
+            tn.obj = NULL;
+        BOOST_TEST_REQUIRE(r);
+    }
+    {
+        fc::ssl_bignum tn;
+        BN_mod_mul(tn, c, blind_sig, n, ctx);
+        BN_mod_add(tn, tn, d, n, ctx);
 
-    if (BN_cmp(sig->s, n_half) > 0) {
-        BN_sub(sig->s, n, sig->s);
+        if (BN_cmp(tn, n_half) > 0) {
+            BN_sub(tn, n, tn);
+        }
+
+        int r = ECDSA_SIG_set0(sig, NULL, tn);
+        if(r)
+            tn.obj = NULL;
+        BOOST_TEST_REQUIRE(r);
     }
 
     fc::ec_key verify(EC_KEY_new());

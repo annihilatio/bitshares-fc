@@ -403,7 +403,12 @@ namespace fc {
                   add_context_to_ready_list(prev, true);
                 }
                 // slog( "jump to %p from %p", next, prev );
-                // fc_dlog( logger::get("fc_context"), "from ${from} to ${to}", ( "from", int64_t(prev) )( "to", int64_t(next) ) ); 
+                // fc_dlog( logger::get("fc_context"), "from ${from} to ${to}", ( "from", int64_t(prev) )( "to", int64_t(next) ) );
+  
+                //NOTE: uncomment this lines if you need to check boost context validity befoure switching the context
+                // char* ctrx_dbg_ptr = reinterpret_cast<char*>(next->my_context) + 0x38;
+                // char dbg = *ctrx_dbg_ptr;
+                
                 bc::detail::transfer_t rj = bc::detail::jump_fcontext( next->my_context, this );
                 static_cast<thread_d*>(rj.data)->old->my_context = rj.fctx;
                 // DDLOG("JUMP_IN: this=%p, current=%p(my_context=%p), next=%p(my_context=%p)", this, current, current ? current->my_context : 0, next, next ? next->my_context : 0);
@@ -444,6 +449,11 @@ namespace fc {
 
                 // slog( "jump to %p from %p", next, prev );
                 // fc_dlog( logger::get("fc_context"), "from ${from} to ${to}", ( "from", int64_t(prev) )( "to", int64_t(next) ) );
+  
+                //NOTE: uncomment this lines if you need to check boost context validity befoure switching the context
+                // char* ctrx_dbg_ptr = reinterpret_cast<char*>(next->my_context) + 0x38;
+                // char dbg = *ctrx_dbg_ptr;
+                
                 bc::detail::transfer_t rj = bc::detail::jump_fcontext( next->my_context, this );
                 static_cast<thread_d*>(rj.data)->old->my_context = rj.fctx;
                 // DDLOG("JUMP_IN: this=%p, current=%p(my_context=%p), next=%p(my_context=%p)", this, current, current ? current->my_context : 0, next, next ? next->my_context : 0);

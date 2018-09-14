@@ -11,7 +11,22 @@
 #include <unordered_map>
 #include <set>
 
-#define MAX_ARRAY_ALLOC_SIZE (1024*1024*10) 
+
+#define MAX_ARRAY_ALLOC_SIZE (1024*1024*10)
+
+namespace dev
+{
+template <unsigned N>
+class FixedHash;
+template <unsigned N>
+class SecureFixedHash;
+
+using Address = FixedHash<20>;
+using Signature = FixedHash<65>;
+using Public = FixedHash<64>;
+using Secret = SecureFixedHash<32>;
+
+}
 
 namespace fc { 
    class time_point;
@@ -39,9 +54,7 @@ namespace fc {
     template<typename Stream, typename IntType, typename EnumType>
     inline void unpack( Stream& s, fc::enum_type<IntType,EnumType>& tp );
 
-
-
-    template<typename Stream, typename T> inline void pack( Stream& s, const std::set<T>& value );
+   template<typename Stream, typename T> inline void pack( Stream& s, const std::set<T>& value );
     template<typename Stream, typename T> inline void unpack( Stream& s, std::set<T>& value );
     template<typename Stream, typename T> inline void pack( Stream& s, const std::unordered_set<T>& value );
     template<typename Stream, typename T> inline void unpack( Stream& s, std::unordered_set<T>& value );
@@ -83,6 +96,16 @@ namespace fc {
     template<typename Stream, typename T> void pack( Stream& s, const fc::optional<T>& v );
     template<typename Stream, typename T> void pack( Stream& s, const safe<T>& v );
     template<typename Stream, typename T> void unpack( Stream& s, fc::safe<T>& v );
+
+    template<typename Stream> inline void pack( Stream& s, const dev::Address& v);
+    template<typename Stream> inline void pack( Stream& s, const dev::Public& v);
+    template<typename Stream> inline void pack( Stream& s, const dev::Signature& v);
+    template<typename Stream> inline void pack( Stream& s, const dev::Secret& v);
+
+   template<typename Stream> inline void unpack( Stream& s, dev::Address& v);
+   template<typename Stream> inline void unpack( Stream& s, dev::Public& v);
+   template<typename Stream> inline void unpack( Stream& s, dev::Signature& v);
+   template<typename Stream> inline void unpack( Stream& s, dev::Secret& v);
 
     template<typename Stream> void unpack( Stream& s, time_point& ); 
     template<typename Stream> void pack( Stream& s, const time_point& );

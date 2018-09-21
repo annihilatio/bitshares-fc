@@ -543,7 +543,6 @@ namespace fc {
       auto itr = value.begin();
       auto end = value.end();
       while( itr != end ) {
-//        static_assert(!std::is_same<const dev::Signature&, decltype(*itr)>::value, "");
         fc::raw::pack( s, *itr );
         ++itr;
       }

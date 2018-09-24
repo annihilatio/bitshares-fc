@@ -1,10 +1,10 @@
 #pragma once
-#include <fc/crypto/sha512.hpp>
-#include <fc/crypto/sha256.hpp>
 #include <fc/uint128.hpp>
 #include <fc/fwd.hpp>
 #include <ethereum/crypto/Common.h>
 #include <vector>
+
+#include <ethereum/core/FixedHash.h>
 
 namespace fc {
     class path;
@@ -44,18 +44,19 @@ namespace fc {
                          unsigned char *iv, unsigned char *plaintext);
     unsigned aes_cfb_decrypt(unsigned char *ciphertext, int ciphertext_len, unsigned char *key,
                              unsigned char *iv, unsigned char *plaintext);
-
-    std::vector<char> aes_encrypt( const fc::sha512& key, const std::vector<char>& plain_text  );
-    std::vector<char> aes_decrypt( const fc::sha512& key, const std::vector<char>& cipher_text );
+    
+    std::vector<char> aes_encrypt( const dev::h512& key, const std::vector<char>& plain_text  );
+    
+    std::vector<char> aes_decrypt( const dev::h512& key, const std::vector<char>& cipher_text );
 
     /** encrypts plain_text and then includes a checksum that enables us to verify the integrety of
      * the file / key prior to decryption. 
      */
-    void              aes_save( const fc::path& file, const fc::sha512& key, std::vector<char> plain_text );
+    void              aes_save( const fc::path& file, const dev::h512& key, std::vector<char> plain_text );
 
     /**
      *  recovers the plain_text saved via aes_save()
      */
-    std::vector<char> aes_load( const fc::path& file, const fc::sha512& key );
+    std::vector<char> aes_load( const fc::path& file, const dev::h512& key );
 
 } // namespace fc 

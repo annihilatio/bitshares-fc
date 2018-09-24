@@ -15,6 +15,7 @@
 # error "OpenSSL must be configured to support threads"
 #endif
 #include <openssl/crypto.h>
+#include <ethereum/core/sha3.h>
 
 #if defined(_WIN32)
 # include <windows.h>
@@ -157,16 +158,26 @@ uint32_t aes_decoder::final_decode( char* plaintext )
 }
 #endif
 
+std::vector<char> aes_encrypt( const dev::h512& key, const std::vector<char>& plain_text  )
+{
+    std::vector<char> cipher_text(plain_text.size()+16);
+    auto cipher_len = aes_encrypt( (unsigned char*)plain_text.data(), (int)plain_text.size(),
+                                   (unsigned char*)key.data(), (unsigned char*)key.data() + 32,
+                                   (unsigned char*)cipher_text.data() );
+    FC_ASSERT( cipher_len <= cipher_text.size() );
+    cipher_text.resize(cipher_len);
+    return cipher_text;
+}
 
-
-
-
-
-
-
-
-
-
+std::vector<char> aes_decrypt( const dev::h512& key, const std::vector<char>& cipher_text )
+{
+    std::vector<char> plain_text( cipher_text.size() );
+    auto plain_len = aes_decrypt( (unsigned char*)cipher_text.data(), (int)cipher_text.size(),
+                                  (unsigned char*)key.data(), (unsigned char*)key.data() + 32,
+                                  (unsigned char*)plain_text.data() );
+    plain_text.resize(plain_len);
+    return plain_text;
+}
 
 /** example method from wiki.opensslfoundation.com */
 unsigned aes_encrypt(unsigned char *plaintext, int plaintext_len, unsigned char *key,
@@ -316,35 +327,14 @@ unsigned aes_cfb_decrypt(unsigned char *ciphertext, int ciphertext_len, unsigned
     return plaintext_len;
 }
 
-std::vector<char> aes_encrypt( const fc::sha512& key, const std::vector<char>& plain_text  )
-{
-    std::vector<char> cipher_text(plain_text.size()+16);
-    auto cipher_len = aes_encrypt( (unsigned char*)plain_text.data(), (int)plain_text.size(),  
-                                   (unsigned char*)&key, ((unsigned char*)&key)+32,
-                                   (unsigned char*)cipher_text.data() );
-    FC_ASSERT( cipher_len <= cipher_text.size() );
-    cipher_text.resize(cipher_len);
-    return cipher_text;
-
-}
-std::vector<char> aes_decrypt( const fc::sha512& key, const std::vector<char>& cipher_text )
-{
-    std::vector<char> plain_text( cipher_text.size() );
-    auto plain_len = aes_decrypt( (unsigned char*)cipher_text.data(), (int)cipher_text.size(),  
-                                 (unsigned char*)&key, ((unsigned char*)&key)+32,
-                                 (unsigned char*)plain_text.data() );
-    plain_text.resize(plain_len);
-    return plain_text;
-}
-
-
 /** encrypts plain_text and then includes a checksum that enables us to verify the integrety of
  * the file / key prior to decryption. 
  */
-void              aes_save( const fc::path& file, const fc::sha512& key, std::vector<char> plain_text )
+ 
+void              aes_save( const fc::path& file, const dev::h512& key, std::vector<char> plain_text )
 { try {
    auto cipher = aes_encrypt( key, plain_text );
-   fc::sha512::encoder check_enc;
+   dev::sha3_512_encoder check_enc;
    fc::raw::pack( check_enc, key );
    fc::raw::pack( check_enc, cipher );
    auto check = check_enc.result();
@@ -357,18 +347,19 @@ void              aes_save( const fc::path& file, const fc::sha512& key, std::ve
 /**
  *  recovers the plain_text saved via aes_save()
  */
-std::vector<char> aes_load( const fc::path& file, const fc::sha512& key )
+ 
+std::vector<char> aes_load( const fc::path& file, const dev::h512& key )
 { try {
    FC_ASSERT( fc::exists( file ) );
 
    fc::ifstream in( file, fc::ifstream::binary );
-   fc::sha512 check;
+   dev::h512 check;
    std::vector<char> cipher;
 
    fc::raw::unpack( in, check );
    fc::raw::unpack( in, cipher );
-
-   fc::sha512::encoder check_enc;
+   
+   dev::sha3_512_encoder check_enc;
    fc::raw::pack( check_enc, key );
    fc::raw::pack( check_enc, cipher );
 

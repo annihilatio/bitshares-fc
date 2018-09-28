@@ -8,6 +8,8 @@
 
 #include <fc/variant.hpp>
 
+#include <ethereum/core/sha3.h>
+
 BOOST_AUTO_TEST_SUITE(fc_crypto)
 
 BOOST_AUTO_TEST_CASE(aes_test)
@@ -15,7 +17,7 @@ BOOST_AUTO_TEST_CASE(aes_test)
     std::ifstream testfile;
     testfile.open("README.md");
 
-    auto key = fc::sha512::hash( "hello", 5 );
+    auto key = dev::sha3_512( std::string("hello") );
     std::stringstream buffer;
     std::string line;
     std::getline( testfile, line );

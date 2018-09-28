@@ -7,6 +7,8 @@ CMAKE_MINIMUM_REQUIRED( VERSION 2.8.12 )
 MESSAGE(STATUS "Configuring project fc located in: ${CMAKE_CURRENT_SOURCE_DIR}")
 SET( CMAKE_AUTOMOC OFF )
 
+SET(CMAKE_EXE_LINKER_FLAGS "-ldl -pthread")
+
 # Setup module path to make visible used CMake extensions
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/GitVersionGen")
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/CMakeModules")
@@ -30,6 +32,8 @@ SET( DEFAULT_EXECUTABLE_INSTALL_DIR bin/ )
 SET( CMAKE_DEBUG_POSTFIX _debug )
 SET( BUILD_SHARED_LIBS NO )
 SET( ECC_IMPL secp256k1 CACHE STRING "secp256k1 or openssl or mixed" )
+
+add_definitions(-DENABLE_MODULE_RECOVERY -DENABLE_MODULE_ECDH)
 
 set(platformBitness 32)
 if(CMAKE_SIZEOF_VOID_P EQUAL 8)
@@ -56,10 +60,31 @@ ENDIF( ECC_IMPL STREQUAL openssl )
 # Configure secp256k1-zkp
 set( SECP256K1_DIR "${CMAKE_CURRENT_SOURCE_DIR}/vendor/secp256k1-zkp" )
 
-file( GLOB SECP256K1_SOURCES "${SECP256K1_DIR}/src/secp256k1.c" )
+file( GLOB SECP256K1_SOURCES
+        "${SECP256K1_DIR}/src/ec*.c"
+        "${SECP256K1_DIR}/src/gen*.c"
+        "${SECP256K1_DIR}/src/secp*.c"
+)
+
+file( GLOB SECP256K1_HEADERS
+        "${SECP256K1_DIR}/src/basic*.h"
+        "${SECP256K1_DIR}/src/ec*.h"
+        "${SECP256K1_DIR}/src/field*.h"
+        "${SECP256K1_DIR}/src/g*.h"
+        "${SECP256K1_DIR}/src/h*.h"
+        "${SECP256K1_DIR}/src/n*.h"
+        "${SECP256K1_DIR}/src/s*.h"
+        "${SECP256K1_DIR}/src/u*.h"
+)
 add_library( secp256k1 ${SECP256K1_SOURCES} )
 
-target_include_directories( secp256k1 PRIVATE "${SECP256K1_DIR}" PUBLIC "${SECP256K1_DIR}/include" )
+add_definitions( -DVERIFY )
+
+target_include_directories( secp256k1
+        PRIVATE "${SECP256K1_DIR}"
+        PUBLIC "${SECP256K1_DIR}/include"
+        PUBLIC "${SECP256K1_DIR}/src"
+)
 
 set( SECP256K1_BUILD_DEFINES
      USE_FIELD_10X26
@@ -182,9 +207,6 @@ set( fc_sources
      src/crypto/sha224.cpp
      src/crypto/sha512.cpp
      src/crypto/dh.cpp
-     src/crypto/elliptic_common.cpp
-     ${ECC_REST}
-     src/crypto/elliptic_${ECC_IMPL}.cpp
      src/crypto/rand.cpp
      src/network/tcp_socket.cpp
      src/network/udp_socket.cpp
@@ -329,7 +351,9 @@ target_include_directories(fc
 
   PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}
     ${CMAKE_CURRENT_SOURCE_DIR}/vendor/secp256k1-zkp
-  )
+
+  PUBLIC "${CMAKE_SOURCE_DIR}/libraries/ethereum/include"
+)
 
 #target_link_libraries( fc PUBLIC ${Boost_LIBRARIES} ${OPENSSL_LIBRARIES} ${ZLIB_LIBRARIES} ${BZIP2_LIBRARIES} ${PLATFORM_SPECIFIC_LIBS} ${RPCRT4} ${CMAKE_DL_LIBS} ${rt_library} ${ECC_LIB} )
 IF(NOT WIN32)

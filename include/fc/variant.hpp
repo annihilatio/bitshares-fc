@@ -7,6 +7,7 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
+#include <list>
 
 #include <string.h> // memset
 
@@ -504,6 +505,15 @@ namespace fc
           vars[i] = variant(t[i]);
        v = std::move(vars);
    }
+
+  template<typename T>
+  void to_variant( const std::list<T>& t, variant& v )
+  {
+    std::vector<variant> vars(t.size());
+    for(const auto& val: t)
+      vars.push_back(variant(val));
+    v = std::move(vars);
+  }
 
 
    /** @ingroup Serializable */

@@ -3,6 +3,7 @@
 
 PROJECT( fc )
 CMAKE_MINIMUM_REQUIRED( VERSION 2.8.12 )
+cmake_policy(VERSION 3.12)
 
 MESSAGE(STATUS "Configuring project fc located in: ${CMAKE_CURRENT_SOURCE_DIR}")
 SET( CMAKE_AUTOMOC OFF )

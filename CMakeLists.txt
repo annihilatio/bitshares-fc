@@ -171,6 +171,7 @@ set( fc_sources
      src/io/fstream.cpp
      src/io/sstream.cpp
      src/io/json.cpp
+     src/io/config_file_output.cpp
      src/io/varint.cpp
      src/io/console.cpp
      src/filesystem.cpp
@@ -219,7 +220,7 @@ set( fc_sources
      src/network/url.cpp
      src/compress/smaz.cpp
      src/compress/zlib.cpp
-     )
+)
 
 file( GLOB_RECURSE fc_headers ${CMAKE_CURRENT_SOURCE_DIR} *.hpp *.h )
 

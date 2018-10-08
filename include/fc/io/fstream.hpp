@@ -42,6 +42,7 @@ namespace fc {
       void      get( char& c ) { read( &c, 1 ); }
       void      close();
       bool      eof()const;
+      size_t    tellg()const;
     private:
       class impl;
       fc::shared_ptr<impl> my;

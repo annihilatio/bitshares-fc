@@ -94,7 +94,13 @@ namespace fc {
    }
    void   ifstream::close() { return my->ifs.close(); }
 
-   bool   ifstream::eof()const { return !my->ifs.good(); }
+   bool   ifstream::eof()const {
+     return my->ifs.peek() == std::char_traits<char>::eof();
+   }
+
+   size_t  ifstream::tellg()const {
+     return my->ifs.tellg();
+   }
 
    void read_file_contents( const fc::path& filename, std::string& result )
    {

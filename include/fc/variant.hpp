@@ -83,6 +83,7 @@ namespace fc
    void from_variant( const variant& var,  mutable_variant_object& vo );
    void to_variant( const std::vector<char>& var,  variant& vo );
    void from_variant( const variant& var,  std::vector<char>& vo );
+   void from_variant( const variant& var,  std::vector<uint8_t>& vo );
 
    template<typename K, typename T>
    void to_variant( const std::unordered_map<K,T>& var,  variant& vo );

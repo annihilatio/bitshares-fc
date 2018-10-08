@@ -656,6 +656,7 @@ void to_variant( const std::vector<char>& var,  variant& vo )
       vo = variant(to_hex(var.data(),var.size()));
   else vo = "";
 }
+
 void from_variant( const variant& var,  std::vector<char>& vo )
 {
      auto str = var.as_string();
@@ -665,8 +666,17 @@ void from_variant( const variant& var,  std::vector<char>& vo )
         size_t r = from_hex( str, vo.data(), vo.size() );
         FC_ASSERT( r == vo.size() );
      }
-//   std::string b64 = base64_decode( var.as_string() );
-//   vo = std::vector<char>( b64.c_str(), b64.c_str() + b64.size() );
+}
+
+void from_variant( const variant& var,  std::vector<uint8_t>& vo )
+{
+   auto str = var.as_string();
+   vo.resize( str.size() / 2 );
+   if( vo.size() )
+   {
+      size_t r = from_hex( str, reinterpret_cast<char*>(vo.data()), vo.size() );
+      FC_ASSERT( r == vo.size() );
+   }
 }
 
 string      format_string( const string& format, const variant_object& args )

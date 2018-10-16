@@ -2,6 +2,7 @@
 #include <fc/utility.hpp>
 #include <string.h>
 #include <stdint.h>
+#include <vector>
 
 namespace fc {
 
@@ -72,6 +73,41 @@ class datastream {
       T _start;
       T _pos;
       T _end;
+};
+
+template<>
+template <typename T>
+class datastream<std::vector<T>> {
+public:
+    datastream(std::vector<T> & vec, size_t t): _vec(vec)
+    {
+      static_assert(
+              std::is_same<T, char>::value ||
+              std::is_same<T, unsigned char>::value ||
+              std::is_same<T, signed char>::value,
+              "invalid type of vector datastream");
+      _vec.reserve(t);
+    };
+
+    inline bool write( const char * c, size_t t)
+    {
+      if (_vec.capacity() >= _vec.size()+t)
+      {
+        auto distance = std::distance(_vec.begin(), _vec.end());
+        _vec.resize(_vec.size() + t);
+        memcpy(&(*(_vec.begin() + distance)), c, t);
+
+        return true;
+      }
+      detail::throw_datastream_range_error( "write", _vec.capacity(), int64_t(t-(_vec.capacity()-_vec.size()) ));
+    }
+
+    inline size_t  tellp()const  { return _vec.size();}
+    inline bool    valid()const  { return true;}
+    inline size_t  remaining()const  { return _vec.capacity()-_vec.size();                       }
+
+private:
+    std::vector<T>& _vec;
 };
 
 template<>

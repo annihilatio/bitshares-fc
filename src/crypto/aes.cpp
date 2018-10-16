@@ -15,7 +15,7 @@
 # error "OpenSSL must be configured to support threads"
 #endif
 #include <openssl/crypto.h>
-#include <ethereum/core/sha3.h>
+#include <ethereum/core/sha3_wrap.h>
 
 #if defined(_WIN32)
 # include <windows.h>
@@ -334,7 +334,7 @@ unsigned aes_cfb_decrypt(unsigned char *ciphertext, int ciphertext_len, unsigned
 void              aes_save( const fc::path& file, const dev::h512& key, std::vector<char> plain_text )
 { try {
    auto cipher = aes_encrypt( key, plain_text );
-   dev::sha3_512_encoder check_enc;
+   dev::openssl::sha3_512_encoder check_enc;
    fc::raw::pack( check_enc, key );
    fc::raw::pack( check_enc, cipher );
    auto check = check_enc.result();
@@ -359,7 +359,7 @@ std::vector<char> aes_load( const fc::path& file, const dev::h512& key )
    fc::raw::unpack( in, check );
    fc::raw::unpack( in, cipher );
    
-   dev::sha3_512_encoder check_enc;
+   dev::openssl::sha3_512_encoder check_enc;
    fc::raw::pack( check_enc, key );
    fc::raw::pack( check_enc, cipher );
 

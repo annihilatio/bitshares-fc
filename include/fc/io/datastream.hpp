@@ -75,7 +75,6 @@ class datastream {
       T _end;
 };
 
-template<>
 template <typename T>
 class datastream<std::vector<T>> {
 public:

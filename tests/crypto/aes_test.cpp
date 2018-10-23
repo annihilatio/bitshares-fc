@@ -8,7 +8,7 @@
 
 #include <fc/variant.hpp>
 
-#include <ethereum/core/sha3_wrap.h>
+#include <fc/crypto/sha3.hpp>
 
 BOOST_AUTO_TEST_SUITE(fc_crypto)
 

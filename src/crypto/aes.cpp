@@ -15,7 +15,7 @@
 # error "OpenSSL must be configured to support threads"
 #endif
 #include <openssl/crypto.h>
-#include <ethereum/core/sha3_wrap.h>
+#include <fc/crypto/sha3.hpp>
 
 #if defined(_WIN32)
 # include <windows.h>

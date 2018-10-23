@@ -42,4 +42,4 @@ add_executable( all_tests all_tests.cpp
                           real128_test.cpp
                           utf8_test.cpp
                           )
-target_link_libraries( all_tests fc ethereum_mod  )
+target_link_libraries( all_tests fc eth-crypto  )

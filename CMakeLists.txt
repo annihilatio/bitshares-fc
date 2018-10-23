@@ -57,8 +57,8 @@ ELSE( ECC_IMPL STREQUAL openssl )
   ENDIF( ECC_IMPL STREQUAL mixed )
 ENDIF( ECC_IMPL STREQUAL openssl )
 
-# Configure secp256k1-zkp
-set( SECP256K1_DIR "${CMAKE_CURRENT_SOURCE_DIR}/vendor/secp256k1-zkp" )
+# Configure secp256k1
+set( SECP256K1_DIR "${CMAKE_SOURCE_DIR}/libraries/secp256k1" )
 
 file( GLOB SECP256K1_SOURCES
         "${SECP256K1_DIR}/src/ec*.c"
@@ -93,7 +93,7 @@ set( SECP256K1_BUILD_DEFINES
      USE_SCALAR_8X32
      USE_SCALAR_INV_BUILTIN )
 set_target_properties( secp256k1 PROPERTIES COMPILE_DEFINITIONS "${SECP256K1_BUILD_DEFINES}" LINKER_LANGUAGE C )
-# End configure secp256k1-zkp
+# End configure secp256k1
 
 IF( WIN32 )
   MESSAGE(STATUS "Configuring fc to build on Win32")
@@ -203,6 +203,7 @@ set( fc_sources
      src/crypto/bigint.cpp
      src/crypto/hex.cpp
      src/crypto/sha1.cpp
+        src/crypto/sha3.cpp
      src/crypto/ripemd160.cpp
      src/crypto/sha256.cpp
      src/crypto/sha224.cpp
@@ -351,9 +352,9 @@ target_include_directories(fc
     "${readline_includes}"
 
   PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}
-    ${CMAKE_CURRENT_SOURCE_DIR}/vendor/secp256k1-zkp
+    ${CMAKE_SOURCE_DIR}/libraries/secp256k1/include
 
-  PUBLIC "${CMAKE_SOURCE_DIR}/libraries/ethereum/include"
+  PUBLIC "${CMAKE_SOURCE_DIR}/libraries/eth-crypto/include"
 )
 
 #target_link_libraries( fc PUBLIC ${Boost_LIBRARIES} ${OPENSSL_LIBRARIES} ${ZLIB_LIBRARIES} ${BZIP2_LIBRARIES} ${PLATFORM_SPECIFIC_LIBS} ${RPCRT4} ${CMAKE_DL_LIBS} ${rt_library} ${ECC_LIB} )

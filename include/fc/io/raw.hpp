@@ -15,7 +15,7 @@
 #include <map>
 #include <deque>
 
-#include <ethereum/crypto/Common.h>
+#include <eth-crypto/crypto/Common.h>
 
 namespace fc {
     namespace raw {

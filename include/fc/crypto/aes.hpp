@@ -1,10 +1,10 @@
 #pragma once
 #include <fc/uint128.hpp>
 #include <fc/fwd.hpp>
-#include <ethereum/crypto/Common.h>
+#include <eth-crypto/crypto/Common.h>
 #include <vector>
 
-#include <ethereum/core/FixedHash.h>
+#include <eth-crypto/core/FixedHash.h>
 
 namespace fc {
     class path;
